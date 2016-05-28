@@ -15,8 +15,8 @@ return [
     */
 
     'mailgun' => [
-        'domain' => env('MAILGUN_DOMAIN'),
-        'secret' => env('MAILGUN_SECRET'),
+        'domain' => 'mail.surge4.com',
+        'secret' => 'key-35f1f99f5651507f1f4899281ca506fb'
     ],
 
     'ses' => [

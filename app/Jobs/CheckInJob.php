@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Checkin;
 use App\Jobs\Job;
 use App\SouthwestAccount;
 use App\SouthwestRequest;
@@ -42,7 +43,7 @@ class CheckInJob extends Job
                 foreach ($trip->flights as $flight) {
                     foreach ($flight->passengers as $passenger) {
 
-                        if ($passenger->checkinEligibilities) {
+                        if (isset($passenger->checkinEligibilities)) {
                             foreach ($passenger->checkinEligibilities as $eligibility) {
 
                                 //Available to check-in and hasn't already done so
@@ -51,14 +52,7 @@ class CheckInJob extends Job
                                     !$eligibility->boardingGroup
                                 ) {
 
-                                    //Do check in
-                                    $southwest->checkIn($flight->recordLocator, $passenger->firstName, $passenger->lastName);
-
-                                    
-                                    //Notify of check in
-                                    Mail::raw("Checked in passenger $passenger->firstName $passenger->lastName under confirmation #$flight->recordLocator", function ($message) use ($account) {
-                                        $message->to($account->user->email)->subject("Southwest check-in complete");
-                                    });
+                                    $checkedIn[] = $this->checkIn($account, $flight, $passenger);
                                     break;
                                 }
                             }
@@ -69,9 +63,47 @@ class CheckInJob extends Job
             }
 
             if (count($checkedIn) == 0) {
-
+                \Log::info("No flights to check in for " . $account->username);
             }
 
         }
+    }
+
+    /**
+     * @param $account
+     * @param $flight
+     * @param $passenger
+     * @return Checkin
+     */
+    protected function checkIn($account, $flight, $passenger)
+    {
+        $southwest = new SouthwestRequest();
+        //Do check in
+        $res = $southwest->checkIn($flight->recordLocator, $passenger->firstName, $passenger->lastName);
+
+        $checkin = $account->checkins()->create([
+            'payload' => json_decode($res->getBody()),
+            'status' => $res->getStatusCode()
+        ]);
+
+        if ($res->getStatusCode() > 400) {
+            //Notify of check in
+            Mail::raw(
+                "Error checking in passenger $passenger->firstName $passenger->lastName under confirmation #$flight->recordLocator. Status Code: $res->getStatusCode()",
+                function ($message) use ($account) {
+                    $message->to($account->user->email)->subject("Southwest check-in error");
+                });
+        } else {
+            //Notify of check in
+            Mail::raw(
+                "Checked in passenger $passenger->firstName $passenger->lastName under confirmation #$flight->recordLocator",
+                function ($message) use ($account) {
+                    $message->to($account->user->email)->subject("Southwest check-in complete");
+                });
+        }
+
+        return $checkin;
+
+
     }
 }

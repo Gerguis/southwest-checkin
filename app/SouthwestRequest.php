@@ -63,6 +63,12 @@ class SouthwestRequest
 
     }
 
+    /**
+     * @param $confirmation
+     * @param $first_name
+     * @param $last_name
+     * @return mixed|\Psr\Http\Message\ResponseInterface
+     */
     public function checkIn($confirmation, $first_name, $last_name)
     {
         $res = $this->client->get("https://api-extensions.southwest.com/v1/mobile/reservations/record-locator/" . $confirmation, [
