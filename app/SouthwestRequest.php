@@ -3,6 +3,7 @@ namespace App;
 
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Crypt;
 
 class SouthwestRequest
 {
@@ -37,7 +38,7 @@ class SouthwestRequest
             'headers' => $this->getDefaultHeaders(),
             'json' => [
                 'accountNumberOrUserName' => $user->sw_username,
-                'password' => $user->sw_password
+                'password' => Crypt::decrypt($user->sw_password)
             ]
         ]);
         $res = json_decode($res->getBody());

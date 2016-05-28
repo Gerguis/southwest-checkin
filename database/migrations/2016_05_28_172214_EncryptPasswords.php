@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateUsersTable extends Migration
+class EncryptPasswords extends Migration
 {
     /**
      * Run the migrations.
@@ -12,9 +12,10 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->rememberToken();
-        });
+        foreach (\App\User::all() as $user) {
+            $user->sw_password = $user->sw_password;
+            $user->save();
+        }
     }
 
     /**
@@ -24,6 +25,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::drop('users');
+        //
     }
 }

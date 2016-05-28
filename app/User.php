@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Crypt;
 
 class User extends Authenticatable
 {
@@ -25,4 +26,12 @@ class User extends Authenticatable
     ];
 
     protected $dates = ['created_at', 'updated_at', 'sw_access_token_expires'];
+
+
+    public function setSwPasswordAttribute($value)
+    {
+        $this->attributes['sw_password'] = Crypt::encrypt($value);
+    }
+
+
 }
