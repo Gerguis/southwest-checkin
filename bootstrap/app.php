@@ -1,4 +1,5 @@
 <?php
+ini_set("xdebug.max_nesting_level", 300);
 
 /*
 |--------------------------------------------------------------------------
@@ -12,7 +13,7 @@
 */
 
 $app = new Illuminate\Foundation\Application(
-    realpath(__DIR__.'/../')
+    realpath(__DIR__ . '/../')
 );
 
 /*

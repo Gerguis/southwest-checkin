@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Crypt;
 class SouthwestRequest
 {
 
-    protected $accessToken;
+    protected $client;
 
     const AVAILABLE_TO_CHECK_IN = "withinCheckinTimeWindow";
     const PAST_DEPARTURE = "passDepartureTime";
@@ -29,33 +29,33 @@ class SouthwestRequest
             ];
     }
 
-    public function login(User $user)
+    public function login(SouthwestAccount $account)
     {
-        if (!$user->sw_password || !$user->sw_username)
+        if (!$account->password || !$account->username)
             throw new \Exception("No login credentials provided");
 
         $res = $this->client->post('https://api-customer.southwest.com/v1/accounts/login', [
             'headers' => $this->getDefaultHeaders(),
             'json' => [
-                'accountNumberOrUserName' => $user->sw_username,
-                'password' => Crypt::decrypt($user->sw_password)
+                'accountNumberOrUserName' => $account->username,
+                'password' => Crypt::decrypt($account->password)
             ]
         ]);
         $res = json_decode($res->getBody());
 
-        $user->sw_access_token = $res->accessToken;
-        $user->sw_access_token_expires = Carbon::parse($res->accessTokenDetails->hotExpirationDateTimeUtc);
-        $user->sw_account = $res->accessTokenDetails->accountNumber;
-        $user->save();
+        $account->access_token = $res->accessToken;
+        $account->access_token_expires = Carbon::parse($res->accessTokenDetails->hotExpirationDateTimeUtc);
+        $account->account_num = $res->accessTokenDetails->accountNumber;
+        $account->save();
     }
 
-    public function getReservations(User $user)
+    public function getReservations(SouthwestAccount $account)
     {
-        if (!$user->sw_access_token || !$user->sw_account || $user->sw_access_token_expires->lt(Carbon::now()))
-            $this->login($user);
+        if (!$account->access_token || !$account->account_num || $account->access_token_expires->lt(Carbon::now()))
+            $this->login($account);
 
-        $res = $this->client->get("https://api-extensions.southwest.com/v1/mobile/account-number/" . $user->sw_account . "/upcoming-trips", [
-            'headers' => $this->getDefaultHeaders() + ['token' => $user->sw_access_token]
+        $res = $this->client->get("https://api-extensions.southwest.com/v1/mobile/account-number/" . $account->account_num . "/upcoming-trips", [
+            'headers' => $this->getDefaultHeaders() + ['token' => $account->access_token]
         ]);
 
         $res = json_decode($res->getBody());

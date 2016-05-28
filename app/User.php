@@ -13,7 +13,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'sw_username', 'sw_password',
+        'name', 'email', 'password'
     ];
 
     /**
@@ -25,12 +25,9 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
-    protected $dates = ['created_at', 'updated_at', 'sw_access_token_expires'];
-
-
-    public function setSwPasswordAttribute($value)
+    public function accounts()
     {
-        $this->attributes['sw_password'] = Crypt::encrypt($value);
+        return $this->hasMany(SouthwestAccount::class);
     }
 
 

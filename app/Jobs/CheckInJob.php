@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Jobs\Job;
+use App\SouthwestAccount;
 use App\SouthwestRequest;
 use App\User;
 use Illuminate\Mail\Mailer;
@@ -31,14 +32,17 @@ class CheckInJob extends Job
      */
     public function handle(SouthwestRequest $southwest)
     {
-        foreach (User::all() as $user) {
+        foreach (SouthwestAccount::all() as $account) {
 
-            try {
-                $reservations = $southwest->getReservations($user);
+            $checkedIn = [];
+            $reservations = $southwest->getReservations($account);
 
-                foreach ($reservations->trips as $trip) {
-                    foreach ($trip->flights as $flight) {
-                        foreach ($flight->passengers as $passenger) {
+            sleep(rand(2, 5));
+            foreach ($reservations->trips as $trip) {
+                foreach ($trip->flights as $flight) {
+                    foreach ($flight->passengers as $passenger) {
+
+                        if ($passenger->checkinEligibilities) {
                             foreach ($passenger->checkinEligibilities as $eligibility) {
 
                                 //Available to check-in and hasn't already done so
@@ -50,20 +54,24 @@ class CheckInJob extends Job
                                     //Do check in
                                     $southwest->checkIn($flight->recordLocator, $passenger->firstName, $passenger->lastName);
 
+                                    
                                     //Notify of check in
-                                    Mail::raw("Checked in passenger $passenger->firstName $passenger->lastName under confirmation #$flight->recordLocator", function ($message) use ($user) {
-                                        $message->to($user->email)->subject("Southwest check-in complete");
+                                    Mail::raw("Checked in passenger $passenger->firstName $passenger->lastName under confirmation #$flight->recordLocator", function ($message) use ($account) {
+                                        $message->to($account->user->email)->subject("Southwest check-in complete");
                                     });
-                                    continue;
+                                    break;
                                 }
                             }
                         }
                     }
                 }
-            } catch (\Exception $e) {
-
-                \Log::info("Error with User #" . $user->id);
+                sleep(rand(10, 20));
             }
+
+            if (count($checkedIn) == 0) {
+
+            }
+
         }
     }
 }
