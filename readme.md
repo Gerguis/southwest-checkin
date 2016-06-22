@@ -12,7 +12,9 @@ php artisan migrate
 Then, you'll need to setup the laravel scheduler feature via a cron job on the server.
 
 Add the following cron entry to your server
-```* * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1```
+```
+* * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
+```
 
 
 Finally, navigate to the `/register` endpoint and sign up for an account.
